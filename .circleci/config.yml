@@ -93,6 +93,14 @@ version: 2.1
       COVERAGE=true PARALLEL_TEST_PROCESSORS=4 PARALLEL_TEST_HEARTBEAT_INTERVAL=3600 bin/parallel_rspec spec/
       COVERAGE=true RSPEC_FILESYSTEM_CHANGES=true bin/rspec
 
+.run_tests_sequentially: &run_tests_sequentially
+  run:
+    name: Run RSpec tests
+    command: |
+      COVERAGE=true bin/rspec
+      COVERAGE=true RSPEC_FILESYSTEM_CHANGES=true bin/rspec
+
+
 .run_features: &run_features
   run:
     name: Run Cucumber features
@@ -140,6 +148,22 @@ version: 2.1
   - *format_coverage
   - *save_coverage
   - *save_test_times
+
+.sequential_test_steps: &sequential_test_steps
+  - checkout
+  - *install_rubygems
+  - *install_bundler
+  - *install_build_deps
+  - *copy_current_gemfile
+  - *restore_gems
+  - *install_dependencies
+  - *save_gems
+  - *restore_test_app_from_workspace
+  - *restore_test_reporter
+  - *run_tests_sequentially
+  - *run_features
+  - *format_coverage
+  - *save_coverage
 
 .test_app_steps: &test_app_steps
   - checkout
@@ -316,7 +340,7 @@ jobs:
       JRUBY_OPTS: -J-Xmx1024m --dev --debug
 
     steps:
-      *test_steps
+      *sequential_test_steps
 
   jruby92rails60:
     docker:
@@ -328,7 +352,7 @@ jobs:
       JRUBY_OPTS: -J-Xmx1024m --dev --debug
 
     steps:
-      *test_steps
+      *sequential_test_steps
 
 workflows:
   version: 2
